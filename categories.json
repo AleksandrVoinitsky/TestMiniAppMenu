@@ -1,0 +1,50 @@
+[
+    {
+        "id": 1,
+        "name": "Горячие блюда",
+        "key": "hot_meals",
+        "image": "i3.webp"
+    },
+    {
+        "id": 2,
+        "name": "Закуски",
+        "key": "appetizers",
+        "image": "i9.webp"
+    },
+    {
+        "id": 3,
+        "name": "Супы",
+        "key": "soups",
+        "image": "i8.webp"
+    },
+    {
+        "id": 4,
+        "name": "Пицца",
+        "key": "pizza",
+        "image": "i4.webp"
+    },
+    {
+        "id": 5,
+        "name": "Десерты",
+        "key": "desserts",
+        "image": "i5.webp"
+    },
+    {
+        "id": 6,
+        "name": "Снеки",
+        "key": "snacks",
+        "image": "i1.webp"
+    },
+    {
+        "id": 7,
+        "name": "Напитки",
+        "key": "drinks",
+        "image": "i7.webp"
+    },
+    {
+        "id": 8,
+        "name": "Все",
+        "key": "all",
+        "image": "i2.webp"
+    }
+]
