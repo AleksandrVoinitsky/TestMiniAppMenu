@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Семантические метки | Nectap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        telegram: {
+                            bg: '#17212b',
+                            surface: '#1f2c3a',
+                            primary: '#5288c1',
+                            primary_hover: '#5d93d1',
+                            text: '#f5f5f5',
+                            secondary_text: '#a8b5c1',
+                            divider: '#2b3a4a',
+                            accent: '#6ab3f3',
+                            success: '#5cb85c',
+                            error: '#ef4444',
+                            warning: '#ffc107',
+                            info: '#17a2b8'
+                        }
+                    },
+                    boxShadow: {
+                        'telegram': '0 2px 12px rgba(0, 0, 0, 0.2)'
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        body {
+            background-color: #17212b;
+            color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .smooth-transition {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .semantic-item {
+            background-color: #1f2c3a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            margin-bottom: 16px;
+        }
+        .semantic-header {
+            padding: 12px 16px;
+            background: #2a3a4a;
+            border-bottom: 1px solid #2b3a4a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        .semantic-header:hover {
+            background: #34495e;
+        }
+        .semantic-header.brackets {
+            background: #1e3a5f;
+            border-left: 3px solid #5288c1;
+        }
+        .semantic-header.brackets:hover {
+            background: #2a4b78;
+        }
+        .semantic-header.square-brackets {
+            background: #2c3e4e;
+            border-left: 3px solid #6ab3f3;
+        }
+        .semantic-header.square-brackets:hover {
+            background: #3a4d5f;
+        }
+        .semantic-header.admin {
+            background: #3e2723;
+            border-left: 3px solid #ef4444;
+        }
+        .semantic-header.admin:hover {
+            background: #4e342e;
+        }
+        .semantic-title {
+            flex: 1;
+            font-size: 0.875rem;
+            color: #f5f5f5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0 8px;
+        }
+        .semantic-title.brackets {
+            color: #6ab3f3;
+            font-weight: 500;
+        }
+        .semantic-content {
+            padding: 16px;
+        }
+        .CodeMirror {
+            height: auto !important;
+            min-height: 80px;
+            border: 1px solid #2b3a4a;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            background: #121820 !important;
+        }
+        .CodeMirror-focused {
+            border-color: #5288c1;
+            box-shadow: 0 0 0 2px rgba(82, 136, 193, 0.3);
+        }
+        .CodeMirror-scroll {
+            min-height: 80px;
+        }
+        .input-field {
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid #2b3a4a;
+            transition: all 0.2s;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #f5f5f5;
+        }
+        .input-field:focus {
+            border-color: #5288c1;
+            box-shadow: 0 0 0 2px rgba(82, 136, 193, 0.3);
+            outline: none;
+        }
+        .empty-state {
+            background-color: #1f2c3a;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .fab {
+            position: fixed;
+            bottom: 5rem;
+            right: 1rem;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            z-index: 20;
+        }
+        .btn-icon {
+            padding: 6px;
+            border-radius: 6px;
+        }
+        .collapse-icon {
+            transition: transform 0.2s;
+        }
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #5288c1;
+            border-radius: 2px;
+        }
+        .file-input-label {
+            display: inline-block;
+            padding: 8px 12px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid #2b3a4a;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        .file-input-label:hover {
+            background-color: rgba(82, 136, 193, 0.2);
+        }
+        .file-input {
+            display: none;
+        }
+        /* Меню и помощь */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 25;
+            display: none;
+        }
+        .popup-container {
+            position: fixed;
+            bottom: 56px;
+            left: 16px;
+            right: 16px;
+            background: #1f2c3a;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 30;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            padding: 16px;
+        }
+        .popup-container.open {
+            transform: translateY(0);
+        }
+        .popup-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .popup-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .popup-item:last-child {
+            margin-bottom: 0;
+        }
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2b3a4a;
+        }
+        .popup-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #a8b5c1;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="h-full" x-data="semanticEditor()" x-init="init()">
+    <div class="flex flex-col h-full bg-telegram-bg">
+        <!-- Main content -->
+        <div class="flex-1 overflow-y-auto pb-16 pt-4">
+            <div class="px-4">
+                <div x-show="activeTab === 'editor'" x-transition.opacity>
+                    <div x-show="semanticItems.length === 0" class="empty-state">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-telegram-secondary_text" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-telegram-text">Семантических меток нет</h3>
+                        <p class="mt-1 text-telegram-secondary_text">Добавьте первую семантическую метку с командой.</p>
+                        <button @click="addSemanticItem()" class="mt-4 bg-telegram-primary hover:bg-telegram-primary_hover text-white py-2 px-4 rounded-lg smooth-transition">
+                            Создать метку
+                        </button>
+                    </div>
+
+                    <div x-show="semanticItems.length > 0">
+                        <template x-for="(item, index) in semanticItems" :key="index">
+                            <div class="semantic-item">
+                                <div class="semantic-header" 
+                                     @click="toggleItem(index)"
+                                     :class="getHeaderClass(item)">
+                                    <button class="text-telegram-text p-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 collapse-icon" :class="{'collapsed': item.collapsed}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    <div class="semantic-title" 
+                                         :class="getTitleClass(item)"
+                                         x-text="item.input || 'Без названия'"></div>
+                                    <button @click.stop="removeSemanticItem(index)" class="text-telegram-error hover:bg-opacity-20 hover:bg-telegram-error p-1 rounded btn-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="semantic-content" x-show="!item.collapsed">
+                                    <div class="mb-3">
+                                        <input x-model="item.input" type="text" class="w-full input-field" placeholder="Текст метки...">
+                                    </div>
+                                    <div>
+                                        <div :id="'editor-' + index" class="json-editor"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating action button -->
+        <button 
+            @click="addSemanticItem()" 
+            class="fab bg-telegram-primary hover:bg-telegram-primary_hover text-white flex items-center justify-center smooth-transition"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+        </button>
+        
+        <!-- Menu Overlay -->
+        <div class="overlay" 
+             x-show="menuOpen" 
+             @click="menuOpen = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:leave="transition ease-in duration-150">
+        </div>
+        
+        <!-- Menu Container -->
+        <div class="popup-container" 
+             :class="{'open': menuOpen}"
+             x-show="menuOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:leave="transition ease-in duration-150">
+            <div class="popup-header">
+                <h3 class="popup-title">Меню</h3>
+                <button @click="menuOpen = false" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="popup-item" @click="addSemanticItem(); menuOpen = false;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-telegram-accent mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Новый</span>
+            </div>
+            <div class="popup-item" @click="downloadSemantic(); menuOpen = false;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-telegram-accent mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Сохранить</span>
+            </div>
+            <div class="popup-item" @click="triggerLoadFile(); menuOpen = false;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-telegram-accent mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span>Открыть</span>
+            </div>
+            <div class="popup-item" @click="triggerMergeFile(); menuOpen = false;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-telegram-accent mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <span>Объединить</span>
+            </div>
+            <div class="popup-item" @click="clearSemantic(); menuOpen = false;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-telegram-error mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Очистить всё</span>
+            </div>
+        </div>
+        
+        <!-- Help Overlay -->
+        <div class="overlay" 
+             x-show="helpOpen" 
+             @click="helpOpen = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:leave="transition ease-in duration-150">
+        </div>
+        
+        <!-- Help Container -->
+        <div class="popup-container" 
+             :class="{'open': helpOpen}"
+             x-show="helpOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:leave="transition ease-in duration-150">
+            <div class="popup-header">
+                <h3 class="popup-title">Помощь</h3>
+                <button @click="helpOpen = false" class="close-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="text-telegram-secondary_text text-sm">
+                <ul class="space-y-2">
+                    <li class="flex items-start">
+                        <span class="text-telegram-accent mr-2">•</span>
+                        <span>Нажмите "+" для создания новой семантической метки</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-telegram-accent mr-2">•</span>
+                        <span>Введите текст метки (например, "#приветствие" или "[Admin] важное")</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-telegram-accent mr-2">•</span>
+                        <span>В поле JSON опишите логику обработки этой метки</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-telegram-accent mr-2">•</span>
+                        <span>Используйте "Сохранить" для экспорта данных в файл</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-telegram-accent mr-2">•</span>
+                        <span>Используйте "Открыть" для загрузки ранее сохраненного файла</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-telegram-accent mr-2">•</span>
+                        <span>"Объединить" позволяет добавить метки из другого файла без дубликатов</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-telegram-error mr-2">•</span>
+                        <span>"Очистить всё" удаляет все метки</span>
+                    </li>
+                </ul>
+                
+                <h3 class="text-md font-semibold text-telegram-text mt-4 mb-2">Типы меток</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center p-2 bg-telegram-bg rounded">
+                        <div class="w-3 h-3 bg-telegram-primary rounded mr-2"></div>
+                        <span class="text-telegram-text text-sm"># - Метка с решеткой (синий цвет)</span>
+                    </div>
+                    <div class="flex items-center p-2 bg-telegram-bg rounded">
+                        <div class="w-3 h-3 bg-telegram-accent rounded mr-2"></div>
+                        <span class="text-telegram-text text-sm">[...] - Квадратные скобки (голубой цвет)</span>
+                    </div>
+                    <div class="flex items-center p-2 bg-telegram-bg rounded">
+                        <div class="w-3 h-3 bg-telegram-error rounded mr-2"></div>
+                        <span class="text-telegram-text text-sm">[Admin] - Административная метка (красный цвет)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom navigation -->
+        <div class="fixed bottom-0 left-0 right-0 bg-telegram-surface border-t border-telegram-divider flex justify-around py-2 z-10">
+            <button 
+                @click="menuOpen = !menuOpen; helpOpen = false;"
+                class="flex flex-col items-center justify-center p-2 text-telegram-secondary_text smooth-transition"
+                :class="{'text-telegram-accent': menuOpen}"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span class="text-xs mt-1">Меню</span>
+            </button>
+            
+            <button 
+                @click="helpOpen = !helpOpen; menuOpen = false;"
+                class="flex flex-col items-center justify-center p-2 text-telegram-secondary_text smooth-transition"
+                :class="{'text-telegram-accent': helpOpen}"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-xs mt-1">Помощь</span>
+            </button>
+        </div>
+        
+        <!-- Hidden file inputs -->
+        <input type="file" id="loadFileInput" class="file-input" accept=".json" @change="loadSemantic">
+        <input type="file" id="mergeFileInput" class="file-input" accept=".json" @change="mergeSemantic">
+    </div>
+
+    <script>
+        function semanticEditor() {
+            return {
+                activeTab: 'editor',
+                menuOpen: false,
+                helpOpen: false,
+                semanticItems: [],
+                editors: [],
+                
+                init() {
+                    // === ДОБАВЛЕНО: Полноэкранный режим для Telegram WebApp ===
+                    if (window.Telegram?.WebApp) {
+                        Telegram.WebApp.expand();
+                        if (typeof Telegram.WebApp.requestFullscreen === 'function') {
+                            try {
+                                Telegram.WebApp.requestFullscreen();
+                            } catch (fullscreenError) {
+                                console.log('Fullscreen not available:', fullscreenError);
+                            }
+                        }
+                    }
+                    // === КОНЕЦ ДОБАВЛЕНИЯ ===
+                    
+                    this.loadFromLocalStorage();
+                    this.$nextTick(() => {
+                        this.initEditors();
+                    });
+                },
+                
+                getHeaderClass(item) {
+                    const trimmedInput = item.input ? item.input.trim() : '';
+                    if (trimmedInput.startsWith('#')) {
+                        return 'brackets';
+                    } else if (trimmedInput.startsWith('[Admin]')) {
+                        return 'admin';
+                    } else if (trimmedInput.startsWith('[') && trimmedInput.includes(']')) {
+                        return 'square-brackets';
+                    }
+                    return '';
+                },
+                
+                getTitleClass(item) {
+                    const trimmedInput = item.input ? item.input.trim() : '';
+                    if (trimmedInput.startsWith('#')) {
+                        return 'brackets';
+                    }
+                    return '';
+                },
+                
+                toggleItem(index) {
+                    this.semanticItems[index].collapsed = !this.semanticItems[index].collapsed;
+                },
+                
+                initEditors() {
+                    this.editors = [];
+                    this.semanticItems.forEach((item, index) => {
+                        if (!item.hasOwnProperty('collapsed')) {
+                            item.collapsed = true;
+                        }
+                        this.$nextTick(() => {
+                            const editorId = 'editor-' + index;
+                            const container = document.getElementById(editorId);
+                            if (container) {
+                                container.innerHTML = '';
+                                const textarea = document.createElement('textarea');
+                                textarea.value = item.logick || '{}';
+                                container.appendChild(textarea);
+                                
+                                const editor = CodeMirror.fromTextArea(textarea, {
+                                    mode: 'application/json',
+                                    theme: 'material-darker',
+                                    lineNumbers: false,
+                                    autoCloseBrackets: true,
+                                    matchBrackets: true,
+                                    indentUnit: 2,
+                                    tabSize: 2,
+                                    indentWithTabs: false,
+                                    lineWrapping: true,
+                                    viewportMargin: Infinity
+                                });
+                                
+                                editor.on('change', (cm) => {
+                                    this.semanticItems[index].logick = cm.getValue();
+                                    this.saveToLocalStorage();
+                                });
+                                
+                                this.editors[index] = editor;
+                            }
+                        });
+                    });
+                },
+                
+                addSemanticItem() {
+                    this.semanticItems.push({
+                        input: '',
+                        logick: '{}',
+                        collapsed: false
+                    });
+                    this.saveToLocalStorage();
+                    this.$nextTick(() => {
+                        const newIndex = this.semanticItems.length - 1;
+                        this.$nextTick(() => {
+                            const editorId = 'editor-' + newIndex;
+                            const container = document.getElementById(editorId);
+                            if (container) {
+                                container.innerHTML = '';
+                                const textarea = document.createElement('textarea');
+                                textarea.value = '{}';
+                                container.appendChild(textarea);
+                                
+                                const editor = CodeMirror.fromTextArea(textarea, {
+                                    mode: 'application/json',
+                                    theme: 'material-darker',
+                                    lineNumbers: false,
+                                    autoCloseBrackets: true,
+                                    matchBrackets: true,
+                                    indentUnit: 2,
+                                    tabSize: 2,
+                                    indentWithTabs: false,
+                                    lineWrapping: true,
+                                    viewportMargin: Infinity
+                                });
+                                
+                                editor.on('change', (cm) => {
+                                    this.semanticItems[newIndex].logick = cm.getValue();
+                                    this.saveToLocalStorage();
+                                });
+                                
+                                this.editors[newIndex] = editor;
+                            }
+                        });
+                    });
+                },
+                
+                removeSemanticItem(index) {
+                    if (confirm('Вы уверены, что хотите удалить эту семантическую метку?')) {
+                        this.semanticItems.splice(index, 1);
+                        this.editors.splice(index, 1);
+                        this.saveToLocalStorage();
+                        // Пересоздаем редакторы для корректной нумерации
+                        this.$nextTick(() => {
+                            this.initEditors();
+                        });
+                    }
+                },
+                
+                clearSemantic() {
+                    if (confirm('Вы уверены, что хотите удалить все семантические метки?')) {
+                        this.semanticItems = [];
+                        this.editors = [];
+                        this.saveToLocalStorage();
+                    }
+                },
+                
+                saveToLocalStorage() {
+                    // Сохраняем без collapsed
+                    const saveData = this.semanticItems.map(item => ({
+                        input: item.input,
+                        logick: item.logick
+                    }));
+                    localStorage.setItem('semanticMarkers', JSON.stringify(saveData));
+                },
+                
+                loadFromLocalStorage() {
+                    const saved = localStorage.getItem('semanticMarkers');
+                    if (saved) {
+                        try {
+                            const data = JSON.parse(saved);
+                            this.semanticItems = data.map(item => ({
+                                input: item.input,
+                                logick: item.logick,
+                                collapsed: true // Всегда закрыты при загрузке
+                            }));
+                        } catch (e) {
+                            console.error('Ошибка загрузки из localStorage:', e);
+                            this.semanticItems = [];
+                        }
+                    }
+                },
+                
+                downloadSemantic() {
+                    // Экспортируем без collapsed
+                    const exportData = this.semanticItems.map(item => ({
+                        input: item.input,
+                        logick: item.logick
+                    }));
+                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'semantic_markers.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                },
+                
+                // Функции для работы с файлами через виртуальные input
+                triggerLoadFile() {
+                    document.getElementById('loadFileInput').click();
+                },
+                
+                triggerMergeFile() {
+                    document.getElementById('mergeFileInput').click();
+                },
+                
+                loadSemantic(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            if (Array.isArray(data)) {
+                                if (data.length > 0 && (!data[0].hasOwnProperty('input') || !data[0].hasOwnProperty('logick'))) {
+                                    alert('Неверный формат файла: отсутствуют обязательные поля (input, logick).');
+                                    return;
+                                }
+                                this.semanticItems = data.map(item => ({
+                                    input: item.input,
+                                    logick: item.logick,
+                                    collapsed: true // Всегда закрыты при загрузке
+                                }));
+                                this.saveToLocalStorage();
+                                this.$nextTick(() => {
+                                    this.initEditors();
+                                });
+                                alert(`Успешно загружено ${data.length} семантических меток.`);
+                            } else {
+                                alert('Неверный формат файла: ожидается массив.');
+                            }
+                        } catch (error) {
+                            alert('Ошибка при парсинге JSON файла: ' + error.message);
+                        } finally {
+                            event.target.value = ''; // Сброс для возможности повторной загрузки
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+                
+                mergeSemantic(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            if (Array.isArray(data)) {
+                                if (data.length > 0 && (!data[0].hasOwnProperty('input') || !data[0].hasOwnProperty('logick'))) {
+                                    alert('Неверный формат файла для объединения: отсутствуют обязательные поля (input, logick).');
+                                    return;
+                                }
+
+                                const existingInputs = new Set(this.semanticItems.map(item => item.input));
+
+                                let mergedCount = 0;
+                                data.forEach(externalItem => {
+                                    if (externalItem.input && !existingInputs.has(externalItem.input)) {
+                                        this.semanticItems.push({
+                                            input: externalItem.input,
+                                            logick: externalItem.logick,
+                                            collapsed: true // Всегда закрыты при добавлении
+                                        });
+                                        existingInputs.add(externalItem.input);
+                                        mergedCount++;
+                                    }
+                                });
+
+                                this.saveToLocalStorage();
+                                this.$nextTick(() => {
+                                    this.initEditors();
+                                });
+                                alert(`Объединение завершено. Добавлено ${mergedCount} новых меток.`);
+                            } else {
+                                alert('Неверный формат файла для объединения: ожидается массив.');
+                            }
+                        } catch (error) {
+                            alert('Ошибка при парсинге JSON файла для объединения: ' + error.message);
+                        } finally {
+                            event.target.value = ''; // Сброс для возможности повторной загрузки
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
