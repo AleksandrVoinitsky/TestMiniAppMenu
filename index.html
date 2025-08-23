@@ -402,7 +402,7 @@
                     </template>
                     <template x-if="!loading">
                         <!-- Categories section -->
-                        <div class="p-3 pt-32">
+                        <div class="p-3 py-20">
                             <h2 class="text-lg font-medium text-telegram-text mb-3">Категории</h2>
                             <div class="grid grid-cols-2 gap-3">
                                 <template x-for="category in categories" :key="category.id">
@@ -440,7 +440,7 @@
                                 </div>
                             </template>
                             <!-- Для основного списка блюд в стиле постов -->
-                            <div class="space-y-4 " x-show="!loading && filteredProducts.length > 0">
+                            <div class="space-y-4" x-show="!loading && filteredProducts.length > 0">
                                 <template x-for="product in visibleProducts" :key="product.id">
                                     <div class="post-card">
                                         <img 
@@ -503,7 +503,7 @@
             
             <!-- Category Products Tab -->
             <div x-show="activeTab === 'category-products'" x-transition.opacity x-cloak>
-                <div class="p-3 pt-32">
+                <div class="p-3 py-20">
                     <div class="flex items-center mb-4 sticky bottom-0 bg-telegram-bg py-2 z-10">
                         <button @click="activeTab = 'shop'" class="mr-2 text-telegram-accent">
                             
@@ -573,7 +573,7 @@
             
             <!-- Promotions Tab -->
             <div x-show="activeTab === 'promotions'" x-transition.opacity x-cloak>
-                <div class="p-3 ">
+                <div class="p-3 py-20">
                     <template x-if="loadingPromotions">
                         <div class="flex flex-col items-center justify-center py-16">
                             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-telegram-accent"></div>
@@ -613,7 +613,7 @@
             
             <!-- Cart Tab -->
             <div x-show="activeTab === 'cart' " x-transition.opacity x-cloak  >
-                <div x-show="cart.length > 0" class="p-3 pt-32">
+                <div x-show="cart.length > 0" class="p-3 py-20">
                     <div class="space-y-3 mb-4">
                         <template x-for="item in cart" :key="item.id">
                             <div class="flex items-center bg-telegram-surface rounded-xl p-3">
